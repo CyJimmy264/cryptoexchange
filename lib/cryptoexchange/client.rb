@@ -1,6 +1,7 @@
 module Cryptoexchange
   class Client
     def initialize
+      @exchange_pairs = {}
     end
 
     def cache
@@ -61,8 +62,10 @@ module Cryptoexchange
 
     def exchange_for(currency)
       exchanges = []
-      available_exchanges.each do |exchange|
-        pairs = pairs(exchange)
+      available_exchanges.each_with_index do |exchange, i|
+        yield i if block_given?
+        @exchange_pairs[exchange] ||= pairs(exchange) rescue {error: 'error'}
+        pairs = @exchange_pairs[exchange]
         next if pairs.is_a?(Hash) && !pairs[:error].empty?
         pairs.compact.each do |pair|
           if [pair.base, pair.target].include?(currency.upcase)
